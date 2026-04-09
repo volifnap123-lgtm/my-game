@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Лесной Побег</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Georgia', serif;
+            background: linear-gradient(180deg, #2d5a27 0%, #1a3d16 50%, #0f2509 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            color: #f0ead6;
+        }
+        h1 {
+            color: #ffd700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 10px;
+            font-size: 2rem;
+        }
+        .info {
+            background: linear-gradient(135deg, rgba(45,90,39,0.9), rgba(26,61,22,0.9));
+            border: 2px solid #4a7c3f;
+            border-radius: 15px;
+            padding: 12px 25px;
+            margin-bottom: 15px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .game-main { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
+        .panel { display: flex; flex-direction: column; gap: 10px; align-items: center; min-width: 120px; }
+        
+        .card {
+            text-align: center;
+            padding: 12px;
+            border-radius: 15px;
+            background: linear-gradient(145deg, rgba(74,124,63,0.8), rgba(45,90,39,0.8));
+            width: 100%;
+            border: 2px solid #6b9b5a;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+        }
+        .card.herdsman { border-color: #c9a227; background: linear-gradient(145deg, rgba(139,115,85,0.9), rgba(100,80,50,0.9)); }
+        .card.ranger { border-color: #5d8a3e; }
+        .card-icon { font-size: 1.6rem; margin-bottom: 5px; }
+        .card-name { font-size: 0.75rem; font-weight: bold; color: #f0ead6; }
+        
+        .btn {
+            background: linear-gradient(135deg, #4a7c3f, #2d5a27);
+            color: #f0ead6;
+            border: 2px solid #6b9b5a;
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            width: 100%;
+            font-family: inherit;
+            transition: all 0.3s;
+        }
+        .btn:hover { background: linear-gradient(135deg, #5d8a3e, #4a7c3f); transform: translateY(-2px); }
+        .btn-restart { background: linear-gradient(135deg, #8b4513, #654321); border-color: #a0522d; margin-top: 5px; }
+        .btn-restart:hover { background: linear-gradient(135deg, #a0522d, #8b4513); }
+        .btn-skip { background: linear-gradient(135deg, #c9a227, #b8860b); border-color: #daa520; }
+        
+        .settings {
+            background: linear-gradient(135deg, rgba(45,90,39,0.8), rgba(26,61,22,0.8));
+            border: 2px solid #4a7c3f;
+            border-radius: 15px;
+            padding: 12px;
+            width: 100%;
+        }
+        .settings label { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; cursor: pointer; }
+        .settings input[type="checkbox"] { width: 18px; height: 18px; accent-color: #4a7c3f; }
+        
+        .rules {
+            background: linear-gradient(135deg, rgba(20,40,15,0.9), rgba(15,30,10,0.9));
+            border: 2px solid #3d6b2e;
+            border-radius: 15px;
+            padding: 12px;
+            width: 100%;
+            font-size: 0.65rem;
+            line-height: 1.6;
+        }
+        .rules h3 { color: #90EE90; margin-bottom: 8px; font-size: 0.9rem; }
+        .rules p { margin-bottom: 4px; }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(24, 1fr);
+            gap: 1px;
+            background: #1a3d16;
+            padding: 5px;
+            border-radius: 10px;
+            border: 3px solid #3d6b2e;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5), inset 0 0 30px rgba(0,0,0,0.3);
+        }
+        .cell {
+            width: 26px;
+            height: 26px;
+            background: linear-gradient(135deg, #3d6b2e, #2d5a27);
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+        }
+        .cell.path { background: linear-gradient(135deg, #8B7355, #6B5344); }
+        .cell.wall { background: linear-gradient(135deg, #228B22, #1a6b1a); }
+        .cell.exit-zone { background: linear-gradient(135deg, #90EE90, #7CCD7C); }
+        .cell.fog { background: linear-gradient(135deg, #1a2f0f, #0f1f08); }
+        
+        .sheep {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #fff, #e8e8e8);
+            border: 2px solid #d0d0d0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            color: #333;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        .sheep.armed {
+            background: radial-gradient(circle at 30% 30%, #f5f5dc, #e8dcb8);
+            border-color: #b8860b;
+        }
+        .sheep.armed::after { content: '🐏'; font-size: 10px; }
+        
+        .wolf {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #696969, #4a4a4a);
+            border: 2px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 8px;
+            color: #fff;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+        }
+        
+        .weapon {
+            position: absolute;
+            font-size: 14px;
+            z-index: 11;
+            text-shadow: 0 0 5px rgba(255,215,0,0.8);
+            animation: sparkle 1.5s infinite;
+        }
+        @keyframes sparkle {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
+        }
+        
+        .barrier-h {
+            position: absolute;
+            bottom: 1px;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #228B22, #32CD32, #228B22);
+            z-index: 5;
+            border-radius: 2px;
+        }
+        .barrier-v {
+            position: absolute;
+            right: 1px;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, #228B22, #32CD32, #228B22);
+            z-index: 5;
+            border-radius: 2px;
+        }
+        
+        .can-move { box-shadow: inset 0 0 10px rgba(144,238,144,0.8); }
+        .turn-info { font-size: 0.95rem; margin: 5px 0; }
+        .counters { font-size: 0.75rem; color: #ffd700; }
+        .weapon-info { font-size: 0.75rem; color: #90EE90; margin-top: 5px; font-weight: bold; }
+        
+        .wood-texture { position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; opacity: 0.05; background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h100v100H0z' fill='%23000'/%3E%3Cpath d='M20 20c10 5 30-5 60 10s30 15 20 30-20 5-40 10-30 0-40-20' stroke='%23000' fill='none'/%3E%3C/svg%3E"); }
+    </style>
+</head>
+<body>
+    <div class="wood-texture"></div>
+    
+    <h1>🌲 ЛЕСНОЙ ПОБЕГ 🌲</h1>
+    
+    <div class="info" id="infoDiv">
+        <div class="turn-info" id="turnInfo">Нажмите ИГРАТЬ</div>
+        <div class="counters" id="counters"></div>
+        <div class="weapon-info" id="weaponInfo"></div>
+    </div>
+
+    <div class="game-main">
+        <div class="panel">
+            <div class="card herdsman">
+                <div class="card-icon">🧑‍🌾</div>
+                <div class="card-name">Пастух</div>
+                <div id="herdsmanCount">Тропы: 3</div>
+            </div>
+            <div class="card ranger">
+                <div class="card-icon">🏕️</div>
+                <div class="card-name">Егерь</div>
+                <div id="rangerCount">Заросли: 2</div>
+            </div>
+            
+            <div class="settings" id="settingsDiv">
+                <label><input type="checkbox" id="fogCheck"> Ночной режим</label>
+            </div>
+            
+            <button class="btn" id="playBtn" onclick="startGame()">ИГРАТЬ</button>
+            <button class="btn btn-restart" id="restartBtn" onclick="resetGame()" style="display:none;">ЗАНОВО</button>
+            <button class="btn btn-skip" id="skipBtn" onclick="skipTurn()" style="display:none;">ПРОПУСТИТЬ</button>
+
+            <div class="rules">
+                <h3>📜 ПРАВИЛА</h3>
+                <p>🧑‍🌾 Пастух - тропы (3)</p>
+                <p>🏕️ Егерь - заросли (2)</p>
+                <p>🐑 Овцы - к поляне</p>
+                <p>🐺 Волки - ловят</p>
+                <p>🦏 Рога - убить волка</p>
+            </div>
+        </div>
+
+        <div id="gridArea" style="display:none;">
+            <div class="grid" id="gridDiv"></div>
+        </div>
+    </div>
+
+    <script>
+        var COLS = 24, ROWS = 16, MAX_F = 3, MAX_M = 3, WEAPONS = 3;
+        var EMPTY = 0, PATH = 1, WALL = 2, EXIT = 3;
+        var PHASE = { HERDSMAN: 0, RANGER: 1, SHEEP: 2, WOLF: 3, OVER: 4 };
+
+        var gs = {
+            grid: [], barriers: { h: [], v: [] },
+            sheeps: [], wolves: [], weapons: [],
+            exits: [], phase: PHASE.HERDSMAN, actions: 3,
+            sIdx: 0, wIdx: 0, round: 1, fog: false,
+            caught: 0, killed: 0, escaped: 0, started: false
+        };
+
+        function init() {
+            gs.grid = []; gs.exits = [];
+            var ex = [
+                { x: COLS - 1, y: Math.floor(ROWS * 0.3) },
+                { x: COLS - 1, y: Math.floor(ROWS * 0.7) },
+                { x: Math.floor(COLS * 0.8), y: ROWS - 1 }
+            ];
+            for (var y = 0; y < ROWS; y++) {
+                gs.grid[y] = [];
+                for (var x = 0; x < COLS; x++) {
+                    var isEx = false;
+                    for (var i = 0; i < ex.length; i++) {
+                        if (ex[i].x === x && ex[i].y === y) { isEx = true; break; }
+                    }
+                    gs.grid[y][x] = isEx ? EXIT : EMPTY;
+                    if (isEx) gs.exits.push({ x: x, y: y });
+                }
+            }
+            
+            gs.barriers.h = []; gs.barriers.v = [];
+            for (var y = 0; y < ROWS; y++) {
+                gs.barriers.h[y] = [];
+                for (var x = 0; x < COLS - 1; x++) gs.barriers.h[y][x] = false;
+            }
+            for (var y = 0; y < ROWS - 1; y++) {
+                gs.barriers.v[y] = [];
+                for (var x = 0; x < COLS; x++) gs.barriers.v[y][x] = false;
+            }
+            
+            for (var y = 0; y < ROWS; y++) {
+                var x = 0;
+                while (x < COLS - 1) {
+                    if (Math.random() < 0.1) {
+                        var len = Math.floor(Math.random() * 3) + 1;
+                        for (var i = 0; i < len && x + i < COLS - 1; i++) {
+                            gs.barriers.h[y][x + i] = true;
+                        }
+                        x += len;
+                    } else x++;
+                }
+            }
+            for (var y = 0; y < ROWS - 1; y++) {
+                for (var x = 0; x < COLS; x++) {
+                    if (Math.random() < 0.08) {
+                        var len = Math.floor(Math.random() * 3) + 1;
+                        for (var i = 0; i < len && y + i < ROWS - 1; i++) {
+                            gs.barriers.v[y + i][x] = true;
+                        }
+                    }
+                }
+            }
+
+            gs.sheeps = [
+                { x: 4, y: 6, hasW: false, alive: true },
+                { x: 4, y: 7, hasW: false, alive: true },
+                { x: 4, y: 8, hasW: false, alive: true }
+            ];
+            gs.wolves = [
+                { x: 2, y: 5, alive: true },
+                { x: 2, y: 7, alive: true },
+                { x: 2, y: 9, alive: true }
+            ];
+
+            gs.weapons = [];
+            var p = 0;
+            while (p < WEAPONS) {
+                var wx = Math.floor(Math.random() * (COLS - 4)) + 1;
+                var wy = Math.floor(Math.random() * (ROWS - 2));
+                var ex = false;
+                for (var i = 0; i < gs.weapons.length; i++) {
+                    if (gs.weapons[i].x === wx && gs.weapons[i].y === wy) { ex = true; break; }
+                }
+                if (!ex) {
+                    gs.weapons.push({ x: wx, y: wy, taken: false });
+                    p++;
+                }
+            }
+        }
+
+        function startGame() {
+            gs.fog = document.getElementById('fogCheck').checked;
+            document.getElementById('settingsDiv').style.display = 'none';
+            document.getElementById('playBtn').style.display = 'none';
+            document.getElementById('restartBtn').style.display = 'block';
+            document.getElementById('skipBtn').style.display = 'block';
+            document.getElementById('gridArea').style.display = 'block';
+            
+            gs.phase = PHASE.HERDSMAN;
+            gs.actions = 3;
+            gs.sIdx = 0; gs.wIdx = 0;
+            gs.round = 1;
+            gs.caught = 0; gs.killed = 0; gs.escaped = 0;
+            gs.started = true;
+            
+            render();
+            updateUI();
+        }
+
+        function resetGame() {
+            document.getElementById('settingsDiv').style.display = 'block';
+            document.getElementById('playBtn').style.display = 'block';
+            document.getElementById('restartBtn').style.display = 'none';
+            document.getElementById('skipBtn').style.display = 'none';
+            document.getElementById('gridArea').style.display = 'none';
+            document.getElementById('turnInfo').textContent = 'Нажмите ИГРАТЬ';
+            document.getElementById('counters').textContent = '';
+            document.getElementById('weaponInfo').textContent = '';
+            init();
+        }
+
+        function render() {
+            var div = document.getElementById('gridDiv');
+            div.innerHTML = '';
+            div.style.gridTemplateColumns = 'repeat(' + COLS + ', 1fr)';
+            
+            var vis = getVisible();
+            
+            for (var y = 0; y < ROWS; y++) {
+                for (var x = 0; x < COLS; x++) {
+                    var cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.style.position = 'relative';
+                    cell.dataset.x = x;
+                    cell.dataset.y = y;
+                    
+                    var ct = gs.grid[y][x];
+                    var isVis = vis[x + ',' + y];
+                    
+                    if (!isVis && gs.fog) cell.classList.add('fog');
+                    else {
+                        if (ct === PATH) cell.classList.add('path');
+                        else if (ct === WALL) cell.classList.add('wall');
+                        else if (ct === EXIT) cell.classList.add('exit-zone');
+                        
+                        if (x < COLS - 1 && gs.barriers.h[y] && gs.barriers.h[y][x]) {
+                            var b = document.createElement('div');
+                            b.className = 'barrier-h';
+                            cell.appendChild(b);
+                        }
+                        if (y < ROWS - 1 && gs.barriers.v[y] && gs.barriers.v[y][x]) {
+                            var b = document.createElement('div');
+                            b.className = 'barrier-v';
+                            cell.appendChild(b);
+                        }
+                        
+                        if (ct === EXIT) {
+                            var blocked = 0;
+                            if (y === 0 || gs.grid[y-1][x] === WALL) blocked++;
+                            if (y === ROWS-1 || gs.grid[y+1][x] === WALL) blocked++;
+                            if (x === 0 || gs.grid[y][x-1] === WALL) blocked++;
+                            if (x === COLS-1 || gs.grid[y][x+1] === WALL) blocked++;
+                            
+                            var dimmed = blocked >= 4;
+                            var exitLabel = document.createElement('div');
+                            exitLabel.style.cssText = 'font-size:10px;color:' + (dimmed ? '#555' : '#fff') + ';font-weight:bold;';
+                            exitLabel.textContent = '🌿';
+                            cell.appendChild(exitLabel);
+                        }
+                    }
+                    
+                    cell.onclick = (function(xx, yy) { return function() { click(xx, yy); }; })(x, y);
+                    div.appendChild(cell);
+                }
+            }
+            
+            for (var i = 0; i < gs.weapons.length; i++) {
+                var w = gs.weapons[i];
+                if (w.taken) continue;
+                var wVis = vis[w.x + ',' + w.y];
+                var pathHere = gs.grid[w.y][w.x] === PATH;
+                if (gs.fog && !wVis && !pathHere) continue;
+                var c = getCell(w.x, w.y);
+                if (c) {
+                    var div = document.createElement('div');
+                    div.className = 'weapon';
+                    div.textContent = '🦏';
+                    c.appendChild(div);
+                }
+            }
+            
+            for (var i = 0; i < gs.sheeps.length; i++) {
+                var s = gs.sheeps[i];
+                if (!s.alive) continue;
+                var c = getCell(s.x, s.y);
+                if (c) {
+                    var div = document.createElement('div');
+                    div.className = 'sheep' + (s.hasW ? ' armed' : '');
+                    if (!s.hasW) div.textContent = '🐑';
+                    c.appendChild(div);
+                }
+            }
+            
+            for (var i = 0; i < gs.wolves.length; i++) {
+                var w = gs.wolves[i];
+                if (!w.alive) continue;
+                var c = getCell(w.x, w.y);
+                if (c) {
+                    var div = document.createElement('div');
+                    div.className = 'wolf';
+                    div.textContent = '🐺';
+                    c.appendChild(div);
+                }
+            }
+            
+            highlight();
+        }
+
+        function getVisible() {
+            var vis = {};
+            var all = gs.sheeps.filter(function(s) { return s.alive; }).concat(gs.wolves.filter(function(w) { return w.alive; }));
+            for (var i = 0; i < all.length; i++) {
+                var p = all[i];
+                for (var dx = -2; dx <= 2; dx++) {
+                    for (var dy = -2; dy <= 2; dy++) {
+                        var nx = p.x + dx, ny = p.y + dy;
+                        if (nx >= 0 && nx < COLS && ny >= 0 && ny < ROWS) vis[nx + ',' + ny] = true;
+                    }
+                }
+            }
+            return vis;
+        }
+
+        function highlight() {
+            if (gs.phase === PHASE.SHEEP) {
+                var s = gs.sheeps[gs.sIdx];
+                if (s && s.alive) {
+                    var neigh = getNeigh(s.x, s.y);
+                    for (var i = 0; i < neigh.length; i++) {
+                        var n = neigh[i];
+                        if (canSheepFrom(s.x, s.y, n.x, n.y)) {
+                            var c = getCell(n.x, n.y);
+                            if (c) c.classList.add('can-move');
+                        }
+                    }
+                }
+            }
+            if (gs.phase === PHASE.WOLF) {
+                var w = gs.wolves[gs.wIdx];
+                if (w && w.alive) {
+                    var neigh = getNeigh(w.x, w.y);
+                    for (var i = 0; i < neigh.length; i++) {
+                        var n = neigh[i];
+                        if (canWolfFrom(w.x, w.y, n.x, n.y)) {
+                            var c = getCell(n.x, n.y);
+                            if (c) c.classList.add('can-move');
+                        }
+                    }
+                }
+            }
+        }
+
+        function getCell(x, y) {
+            return document.querySelector('.cell[data-x="' + x + '"][data-y="' + y + '"]');
+        }
+
+        function getNeigh(x, y) {
+            return [
+                { x: x, y: y - 1 },
+                { x: x, y: y + 1 },
+                { x: x - 1, y: y },
+                { x: x + 1, y: y }
+            ];
+        }
+
+        function canSheep(x, y) {
+            if (x < 0 || x >= COLS || y < 0 || y >= ROWS) return false;
+            return gs.grid[y][x] === PATH || gs.grid[y][x] === EXIT;
+        }
+
+        function canSheepFrom(fromX, fromY, toX, toY) {
+            if (!canSheep(toX, toY)) return false;
+            if (hasBarrier(fromX, fromY, toX, toY)) return false;
+            return true;
+        }
+
+        function canWolfFrom(fromX, fromY, toX, toY) {
+            if (!canWolf(toX, toY)) return false;
+            if (hasBarrier(fromX, fromY, toX, toY)) return false;
+            return true;
+        }
+
+        function hasBarrier(x1, y1, x2, y2) {
+            if (y1 === y2) {
+                var y = y1;
+                if (y >= 0 && y < ROWS) {
+                    if (x2 > x1 && x1 >= 0 && x1 < COLS - 1) return gs.barriers.v[y] && gs.barriers.v[y][x1];
+                    if (x2 < x1 && x2 >= 0 && x2 < COLS - 1) return gs.barriers.v[y] && gs.barriers.v[y][x2];
+                }
+            }
+            if (x1 === x2) {
+                var x = x1;
+                if (x >= 0 && x < COLS) {
+                    if (y2 > y1 && y1 >= 0 && y1 < ROWS - 1) return gs.barriers.h[y1] && gs.barriers.h[y1][x];
+                    if (y2 < y1 && y2 >= 0 && y2 < ROWS - 1) return gs.barriers.h[y2] && gs.barriers.h[y2][x];
+                }
+            }
+            return false;
+        }
+
+        function canWolf(x, y) {
+            if (x < 0 || x >= COLS || y < 0 || y >= ROWS) return false;
+            if (gs.grid[y][x] === WALL) return false;
+            return true;
+        }
+
+        function updateUI() {
+            var aliveS = 0, aliveW = 0;
+            for (var i = 0; i < gs.sheeps.length; i++) if (gs.sheeps[i].alive) aliveS++;
+            for (var i = 0; i < gs.wolves.length; i++) if (gs.wolves[i].alive) aliveW++;
+
+            document.getElementById('counters').textContent = 'Раунд: ' + gs.round + ' | Поймано: ' + gs.caught + '/' + MAX_F + ' | Убито: ' + gs.killed + '/' + MAX_M;
+            document.getElementById('herdsmanCount').textContent = 'Тропы: ' + (gs.phase === PHASE.HERDSMAN ? gs.actions : 0) + '/3';
+            document.getElementById('rangerCount').textContent = 'Заросли: ' + (gs.phase === PHASE.RANGER ? gs.actions : 0) + '/2';
+            
+            var s = gs.sheeps[gs.sIdx];
+            document.getElementById('weaponInfo').textContent = (s && s.hasW) ? '🦏 Рога!' : '';
+            
+            var info = document.getElementById('turnInfo');
+            var skipBtn = document.getElementById('skipBtn');
+            
+            var canMove = false;
+            if (gs.phase === PHASE.SHEEP && s && s.alive) {
+                var neigh = getNeigh(s.x, s.y);
+                for (var i = 0; i < neigh.length; i++) {
+                    if (canSheepFrom(s.x, s.y, neigh[i].x, neigh[i].y)) { canMove = true; break; }
+                }
+            }
+            
+            skipBtn.style.display = (gs.phase === PHASE.SHEEP) ? 'block' : 'none';
+            if (!canMove && gs.phase === PHASE.SHEEP) {
+                info.textContent = '🐑 Овца ' + (gs.sIdx + 1) + '/' + aliveS + ' - В ЛОВУШКЕ!';
+            } else {
+                switch (gs.phase) {
+                    case PHASE.HERDSMAN: info.textContent = '🧑‍🌾 Пастух (' + gs.actions + '/3)'; break;
+                    case PHASE.RANGER: info.textContent = '🏕️ Егерь (' + gs.actions + '/2)'; break;
+                    case PHASE.SHEEP: info.textContent = '🐑 Овца ' + (gs.sIdx + 1) + '/' + aliveS; break;
+                    case PHASE.WOLF: info.textContent = '🐺 Волк ' + (gs.wIdx + 1) + '/' + aliveW; break;
+                    case PHASE.OVER: info.textContent = '🏁 ИГРА ОКОНЧЕНА'; break;
+                }
+            }
+        }
+
+        function click(x, y) {
+            if (!gs.started || gs.phase === PHASE.OVER) return;
+            
+            if (gs.phase === PHASE.HERDSMAN) {
+                if (gs.grid[y][x] === EMPTY) {
+                    gs.grid[y][x] = PATH;
+                    gs.actions--;
+                    if (gs.actions <= 0) { gs.phase = PHASE.RANGER; gs.actions = 2; }
+                }
+            }
+            else if (gs.phase === PHASE.RANGER) {
+                var cellOccupied = false;
+                for (var i = 0; i < gs.sheeps.length; i++) {
+                    if (gs.sheeps[i].alive && gs.sheeps[i].x === x && gs.sheeps[i].y === y) {
+                        cellOccupied = true; break;
+                    }
+                }
+                
+                if (gs.grid[y][x] !== EXIT && gs.grid[y][x] !== WALL && !cellOccupied) {
+                    var oldVal = gs.grid[y][x];
+                    gs.grid[y][x] = WALL;
+                    var hasAccessibleExit = false;
+                    for (var i = 0; i < gs.exits.length; i++) {
+                        var e = gs.exits[i];
+                        var acc = 0;
+                        if (e.y > 0 && gs.grid[e.y-1][e.x] !== WALL) acc++;
+                        if (e.y < ROWS-1 && gs.grid[e.y+1][e.x] !== WALL) acc++;
+                        if (e.x > 0 && gs.grid[e.y][e.x-1] !== WALL) acc++;
+                        if (e.x < COLS-1 && gs.grid[e.y][e.x+1] !== WALL) acc++;
+                        if (acc >= 1) { hasAccessibleExit = true; break; }
+                    }
+                    gs.grid[y][x] = oldVal;
+                    
+                    if (!hasAccessibleExit) {
+                        alert('Нельзя блокировать все поляны!');
+                        return;
+                    }
+                    
+                    gs.grid[y][x] = WALL;
+                    gs.actions--;
+                    if (gs.actions <= 0) { gs.phase = PHASE.SHEEP; gs.sIdx = 0; while (gs.sIdx < MAX_F && !gs.sheeps[gs.sIdx].alive) gs.sIdx++; }
+                }
+            }
+            else if (gs.phase === PHASE.SHEEP) {
+                var s = gs.sheeps[gs.sIdx];
+                if (s && s.alive) {
+                    var dx = Math.abs(x - s.x), dy = Math.abs(y - s.y);
+                    if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
+                        if (canSheepFrom(s.x, s.y, x, y)) {
+                            for (var i = 0; i < gs.weapons.length; i++) {
+                                var w = gs.weapons[i];
+                                if (w.x === x && w.y === y && !w.taken && !s.hasW) { s.hasW = true; w.taken = true; }
+                            }
+                            var wHere = null;
+                            for (var i = 0; i < gs.wolves.length; i++) {
+                                if (gs.wolves[i].alive && gs.wolves[i].x === x && gs.wolves[i].y === y) { wHere = gs.wolves[i]; break; }
+                            }
+                            if (wHere) {
+                                if (s.hasW) { wHere.alive = false; s.hasW = false; gs.killed++; }
+                                else { s.alive = false; s.hasW = false; gs.caught++; }
+                            } else {
+                                s.x = x; s.y = y;
+                                if (gs.grid[y][x] === EXIT) { s.alive = false; gs.escaped++; }
+                            }
+                            gs.sIdx++;
+                            while (gs.sIdx < MAX_F && !gs.sheeps[gs.sIdx].alive) gs.sIdx++;
+                            if (gs.sIdx >= MAX_F) { 
+                                var allEscapedOrCaught = true;
+                                for (var i = 0; i < gs.sheeps.length; i++) {
+                                    if (gs.sheeps[i].alive) { allEscapedOrCaught = false; break; }
+                                }
+                                if (allEscapedOrCaught) {
+                                    if (gs.escaped > 0) {
+                                        gs.phase = PHASE.OVER; alert('🐑 ОВЦЫ ПОБЕЖДАЮТ! (' + gs.escaped + ' сбежало)');
+                                    } else {
+                                        gs.phase = PHASE.WOLF; gs.wIdx = 0; while (gs.wIdx < MAX_M && !gs.wolves[gs.wIdx].alive) gs.wIdx++;
+                                    }
+                                } else {
+                                    gs.phase = PHASE.WOLF; gs.wIdx = 0; while (gs.wIdx < MAX_M && !gs.wolves[gs.wIdx].alive) gs.wIdx++;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            else if (gs.phase === PHASE.WOLF) {
+                var w = gs.wolves[gs.wIdx];
+                if (w && w.alive) {
+                    var dx = Math.abs(x - w.x), dy = Math.abs(y - w.y);
+                    if ((dx === 1 && dy === 0) || (dx === 0 && dy === 1)) {
+                        if (canWolfFrom(w.x, w.y, x, y)) {
+                            w.x = x; w.y = y;
+                            for (var i = 0; i < gs.sheeps.length; i++) {
+                                var s = gs.sheeps[i];
+                                if (s.alive && s.x === x && s.y === y) {
+                                    if (s.hasW) { w.alive = false; s.hasW = false; gs.killed++; }
+                                    else { s.alive = false; gs.caught++; }
+                                }
+                            }
+                            gs.wIdx++;
+                            while (gs.wIdx < MAX_M && !gs.wolves[gs.wIdx].alive) gs.wIdx++;
+                            if (gs.wIdx >= MAX_M) {
+                                var aliveCount = 0;
+                                for (var j = 0; j < gs.sheeps.length; j++) {
+                                    if (gs.sheeps[j].alive) aliveCount++;
+                                }
+                                if (aliveCount === 0) {
+                                    gs.phase = PHASE.OVER; alert('🐺 ВОЛКИ ПОБЕЖДАЮТ!');
+                                } else {
+                                    gs.round++; gs.phase = PHASE.HERDSMAN; gs.actions = 3;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            render();
+            updateUI();
+        }
+
+        function skipTurn() {
+            if (gs.phase === PHASE.SHEEP) {
+                gs.sIdx++;
+                while (gs.sIdx < MAX_F && !gs.sheeps[gs.sIdx].alive) gs.sIdx++;
+                if (gs.sIdx >= MAX_F) {
+                    gs.phase = PHASE.WOLF;
+                    gs.wIdx = 0;
+                    while (gs.wIdx < MAX_M && !gs.wolves[gs.wIdx].alive) gs.wIdx++;
+                }
+                render();
+                updateUI();
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>
